@@ -1,0 +1,54 @@
+name: CMake
+
+on:
+  push:
+    tags:        
+      - '*'
+
+jobs:
+  build-macos-cocoa-clang:
+    name: Cocoa (macOS, Clang)
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on:  macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 10.15
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Chmod
+        run: chmod 775 ${{github.workspace}}/build.command
+
+      - name: Build
+        run: cd ${{github.workspace}} && ./build.command
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: darwin
+          path: ${{github.workspace}}/ffmpeg-install
+
+  release:
+    name: Release
+    needs: [build-macos-cocoa-clang]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+
+      - uses: actions/download-artifact@master
+        with:
+          name: darwin
+          path: ${{github.workspace}}/release/darwin
+
+      - name: Zip
+        run: cd ${{github.workspace}}/release && zip -vr ${{github.workspace}}/release.zip ./ && cd ${{github.workspace}}
+      
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          name: ${{ steps.version.outputs.version }}
+          files: ${{github.workspace}}/release.zip
+      
