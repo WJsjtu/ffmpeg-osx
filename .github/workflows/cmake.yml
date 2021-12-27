@@ -19,15 +19,30 @@ jobs:
       - uses: actions/checkout@master
 
       - name: Chmod
-        run: chmod 775 ${{github.workspace}}/build.command
+        run: |
+          chmod 775 ${{github.workspace}}/build.sh
+          chmod 775 ${{github.workspace}}/download.pl
+          chmod 775 ${{github.workspace}}/env.source
+          chmod 775 ${{github.workspace}}/fetchurl
+
+      - name: Install
+        run: brew install bison automake wget git cmake gnu-sed
 
       - name: Build
-        run: cd ${{github.workspace}} && ./build.command
+        run: cd ${{github.workspace}} && ./build.sh
 
       - uses: actions/upload-artifact@master
         with:
-          name: darwin
-          path: ${{github.workspace}}/ffmpeg-install
+          name: darwin-build
+          path: |
+            ${{github.workspace}}/build/install
+            ${{github.workspace}}/build/download
+            ${{github.workspace}}/build/bin
+      
+      - uses: actions/upload-artifact@master
+        with:
+          name: darwin-install
+          path: ${{github.workspace}}/install
 
   release:
     name: Release
@@ -38,8 +53,13 @@ jobs:
 
       - uses: actions/download-artifact@master
         with:
-          name: darwin
-          path: ${{github.workspace}}/release/darwin
+          name: darwin-build
+          path: ${{github.workspace}}/release/build
+
+      - uses: actions/download-artifact@master
+        with:
+          name: darwin-install
+          path: ${{github.workspace}}/release
 
       - name: Zip
         run: cd ${{github.workspace}}/release && zip -vr ${{github.workspace}}/release.zip ./ && cd ${{github.workspace}}
