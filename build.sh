@@ -994,7 +994,11 @@ if [ "$platform" = "darwin" ]; then
   dylibs=("libavcodec.58.dylib" "libavdevice.58.dylib" "libavfilter.7.dylib" "libavformat.58.dylib" "libavutil.56.dylib" "libpostproc.55.dylib" "libswresample.3.dylib" "libswscale.5.dylib")
   for dylib in ${dylibs[@]}; do
     for _dylib in ${dylibs[@]}; do
-      install_name_tool -change $INSTALL_DIR/lib/$_dylib @loader_path/$_dylib $INSTALL_DIR/lib/$dylib
+      if [ "$dylib" = "$_dylib" ]; then
+        install_name_tool -id @loader_path/$_dylib $INSTALL_DIR/lib/$dylib
+      else
+        install_name_tool -change $INSTALL_DIR/lib/$_dylib @loader_path/$_dylib $INSTALL_DIR/lib/$dylib
+      fi
     done
   done
 fi
